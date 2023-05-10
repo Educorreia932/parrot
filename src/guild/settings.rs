@@ -8,6 +8,7 @@ use std::{
     io::{BufReader, BufWriter},
     path::Path,
 };
+use serenity::model::id::UserId;
 
 use crate::errors::ParrotError;
 
@@ -25,6 +26,7 @@ pub struct GuildSettings {
     pub autopause: bool,
     pub allowed_domains: HashSet<String>,
     pub banned_domains: HashSet<String>,
+    pub lastfm_users: HashMap<UserId, String>,
 }
 
 impl GuildSettings {
@@ -39,6 +41,7 @@ impl GuildSettings {
             autopause: false,
             allowed_domains,
             banned_domains: HashSet::new(),
+            lastfm_users: HashMap::new(),
         }
     }
 
@@ -106,6 +109,10 @@ impl GuildSettings {
             self.allowed_domains.insert(String::from("youtube.com"));
             self.banned_domains.clear();
         }
+    }
+
+    pub fn add_lastfm_user(&mut self, user_id: UserId, session_key: &str) {
+        self.lastfm_users.insert(user_id, session_key.to_string());
     }
 }
 

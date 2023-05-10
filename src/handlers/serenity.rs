@@ -25,6 +25,7 @@ use serenity::{
     },
     prelude::Mentionable,
 };
+use crate::commands::register::register;
 
 pub struct SerenityHandler;
 
@@ -221,6 +222,11 @@ impl SerenityHandler {
                 })
                 .create_application_command(|command| {
                     command
+                        .name("register")
+                        .description("Registers a Last.fm account for track scrobbling")
+                })
+                .create_application_command(|command| {
+                    command
                         .name("repeat")
                         .description("Toggles looping for the current track")
                 })
@@ -368,6 +374,7 @@ impl SerenityHandler {
             "play" | "superplay" => play(ctx, command).await,
             "queue" => queue(ctx, command).await,
             "remove" => remove(ctx, command).await,
+            "register" => register(ctx, command).await,
             "repeat" => repeat(ctx, command).await,
             "resume" => resume(ctx, command).await,
             "seek" => seek(ctx, command).await,

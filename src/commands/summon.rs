@@ -14,6 +14,7 @@ use serenity::{
 };
 use songbird::{Event, TrackEvent};
 use std::time::Duration;
+use crate::handlers::scrobble::ScrobbleHandler;
 
 pub async fn summon(
     ctx: &Context,
@@ -46,6 +47,15 @@ pub async fn summon(
         let mut handler = call.lock().await;
 
         handler.remove_all_global_events();
+
+        handler.add_global_event(
+            Event::Delayed(Duration::from_secs(0)),
+            ScrobbleHandler {
+                guild_id: guild.id,
+                ctx_cache: ctx.cache.clone(),
+                ctx_data: ctx.data.clone(),
+            }
+        );
 
         handler.add_global_event(
             Event::Periodic(Duration::from_secs(1), None),
