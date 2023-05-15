@@ -21,9 +21,10 @@ use serenity::{
     model::application::interaction::application_command::ApplicationCommandInteraction,
     prelude::Mutex,
 };
-use songbird::{input::Restartable, tracks::TrackHandle, Call};
+use songbird::{input::Restartable, tracks::TrackHandle, Call, Event};
 use std::{cmp::Ordering, error::Error as StdError, sync::Arc, time::Duration};
 use url::Url;
+use crate::handlers::scrobble::ScrobbleHandler;
 
 #[derive(Clone, Copy)]
 pub enum Mode {
@@ -311,6 +312,20 @@ pub async fn play(
             let embed = create_now_playing_embed(track).await;
 
             edit_embed_response(&ctx.http, interaction, embed).await?;
+
+            let guild = ctx.cache.guild(guild_id).unwrap();
+            
+            let mut handler = call.lock().await;
+            
+            handler.add_global_event(
+                Event::Delayed(Duration::from_secs(0)),
+                ScrobbleHandler {
+                    guild_id: guild.id,
+                    ctx_cache: ctx.cache.clone(),
+                    ctx_data: ctx.data.clone(),
+                    call: call.clone()
+                }
+            );
         }
         _ => unreachable!(),
     }

@@ -6,9 +6,9 @@ use serenity::{
     async_trait,
     cache::Cache,
     model::id::GuildId,
-    prelude::{RwLock, TypeMap},
+    prelude::{Mutex, RwLock, TypeMap},
 };
-use songbird::{Event, EventContext, EventHandler};
+use songbird::{Call, Event, EventContext, EventHandler};
 
 use crate::connection::get_voice_channel_for_user;
 use crate::errors::ParrotError;
@@ -18,6 +18,7 @@ pub struct ScrobbleHandler {
     pub ctx_data: Arc<RwLock<TypeMap>>,
     pub ctx_cache: Arc<Cache>,
     pub guild_id: GuildId,
+    pub call: Arc<Mutex<Call>>,
 }
 
 #[async_trait]
@@ -28,15 +29,18 @@ impl EventHandler for ScrobbleHandler {
 
         let shared_secret = &env::var("LASTFM_SHARED_SECRET")
             .map_err(|_| ParrotError::Other("missing Last.fm shared secret")).unwrap();
+
+        let handler = self.call.lock().await;
+        let track = &handler
+            .queue()
+            .current_queue()
+            .get(0)
+            .unwrap()
+            .clone();
         
-        // let EventContext::Track(track_list) = ctx else {
-        //     return None;
-        // };
-
-        // let track = track_list.get(0).unwrap().1;
-        // let metadata = track.metadata().clone();
-
-        // println!("[DEBUG] {}", metadata.track.unwrap());
+        let metadata = track.metadata().clone();
+        let artist = &metadata.artist.unwrap();
+        let title = &metadata.title.unwrap();
 
         let guild = self.ctx_cache.guild(&self.guild_id).unwrap();
         let voice_states = &guild.voice_states;
@@ -65,7 +69,7 @@ impl EventHandler for ScrobbleHandler {
 
             scrobbler.authenticate_with_session_key(session_key);
 
-            let track = Scrobble::new("Los Campesinos!", "To Tundra", "No Blues");
+            let track = Scrobble::new(&artist, &title, "");
 
             scrobbler.scrobble(&track).ok()?;
 
